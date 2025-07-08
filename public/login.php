@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"]==="POST" && isset($_POST["login"])) {
 }
 ?>
 
-<div class="d-flex justify-content-center align-items-center vh-100">
+<div class="d-flex justify-content-center mt-5 vh-100">
   <div class="w-50">
     <h2 class="text-center mb-4">Login</h2>
 
@@ -53,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"]==="POST" && isset($_POST["login"])) {
 
     <!-- Submit button -->
     <div class="d-grid">
-        <button type="submit" name="login" class="btn btn-primary">Login</button>
+        <button type="submit" name="login" class="btn btn-dark">Login</button>
     </div>
     </form>
   </div>
