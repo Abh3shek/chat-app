@@ -14,7 +14,6 @@ session_start();  // Start session to check if the user is logged in
     <!-- If the user is logged in -->
     <h2>Welcome to the Chat App!</h2>
     <p>We're glad to have you here, <?php echo htmlspecialchars($_SESSION['username']); ?>!</p>
-    <p>Database connection successful!</p>
   <?php else: ?>
     <!-- If the user is not logged in -->
     <p>Please <a href="login.php" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">sign ip</a>
