@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['register'])) {
         <label for="inputUserName" class="form-label">Username</label>
         <div class="input-group">
           <span class="input-group-text">@</span>
-          <input type="text" name="username" class="form-control" id="inputUserName" placeholder="john_doe" required>
+          <input type="text" name="username" class="form-control" id="inputUserName" placeholder="nickname" required>
         </div>
       </div>
 

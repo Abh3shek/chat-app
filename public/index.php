@@ -3,9 +3,15 @@ require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 checkAuth();
+$title = "Home";
 include '../includes/header.php';  // This includes the navbar
 
 session_start();  // Start session to check if the user is logged in
+
+// to fetch chat_rooms 
+$stmt = $pdo->query("SELECT id, name, description FROM chat_rooms ORDER BY id ASC");
+$chatRooms = $stmt->fetchAll();
+
 ?>
 
 <!-- Main content of the page -->
@@ -20,6 +26,18 @@ session_start();  // Start session to check if the user is logged in
     or
     <a href="register.php" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">sign up</a> to access the chat.</p>
   <?php endif; ?>
+
+  <h2>Available Chat Rooms</h2>
+    <ul>
+        <?php foreach ($chatRooms as $room): ?>
+            <li>
+                <strong><?php echo htmlspecialchars($room['name']); ?></strong> -
+                <?php echo htmlspecialchars($room['description']); ?>
+                <a href="chatroom.php?room_id=<?php echo $room['id']; ?>">Join</a>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
 </div>
 
 <?php
