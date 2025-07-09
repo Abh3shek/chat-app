@@ -1,0 +1,18 @@
+# PHP / Composer
+vendor/
+
+# Logs
+*.log
+error_log*
+
+# OS system files
+.DS_Store
+Thumbs.db
+
+# IDE configs
+.vscode/
+.idea/
+.DS_Store
+
+# Environment files
+.env

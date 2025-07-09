@@ -27,7 +27,7 @@ $chatRooms = $stmt->fetchAll();
     <a href="register.php" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">sign up</a> to access the chat.</p>
   <?php endif; ?>
 
-  <h2>Available Chat Rooms</h2>
+  <!-- <h2>Available Chat Rooms</h2>
     <ul>
         <?php foreach ($chatRooms as $room): ?>
             <li>
@@ -36,7 +36,21 @@ $chatRooms = $stmt->fetchAll();
                 <a href="chatroom.php?room_id=<?php echo $room['id']; ?>">Join</a>
             </li>
         <?php endforeach; ?>
-    </ul>
+    </ul> -->
+
+    <h2>Available Chat Rooms</h2>
+  <ul>
+      <?php foreach ($chatRooms as $room): ?>
+          <li>
+              <strong><?php echo htmlspecialchars($room['name']); ?></strong> -
+              <?php echo htmlspecialchars($room['description']); ?>
+              <form action="chatroom.php" method="get" style="display: inline;">
+                  <input type="hidden" name="room_id" value="<?php echo $room['id']; ?>">
+                  <button class="btn btn-outline-dark" type="submit">Join</button>
+              </form>
+          </li>
+      <?php endforeach; ?>
+  </ul>
 
 </div>
 
