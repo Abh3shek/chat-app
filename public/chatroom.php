@@ -19,6 +19,7 @@ $stmt = $pdo->prepare("
     WHERE messages.room_id = :room_id 
     ORDER BY messages.timestamp ASC 
     LIMIT 50
+    
 ");
 $stmt->execute(['room_id' => $room_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
