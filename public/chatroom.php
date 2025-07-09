@@ -38,51 +38,91 @@ $title = htmlspecialchars($room['name']) . " Chatroom";
 include '../includes/header.php';
 ?>
 
-<div class="container mt-5">
-    <div class="col-md-6 d-flex align-items-center gap-3">
-        <h4><a href="index.php" class="cursor-pointer link-dark"><i class="bi bi-arrow-left"></i></a></h4>
-        <div class="mb-2 vr"></div>
-        <h3 style="cursor: pointer;" class="pe-3" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?php echo htmlspecialchars($room['description']); ?>">
-            <?php echo htmlspecialchars($room['name']); ?> Chat Room
-        </h3>
+<div class="container mt-5" style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <h4 class="m-0"><a href="index.php" class="link-dark"><i class="bi bi-arrow-left"></i></a></h4>
+            <h3 class="m-0" data-bs-toggle="tooltip" data-bs-placement="right" title="<?php echo htmlspecialchars($room['description']); ?>">
+                <?php echo htmlspecialchars($room['name']); ?> Chat Room
+            </h3>
+        </div>
+        <p id="status" class="m-0 text-success">Connecting...</p>
     </div>
-    <p><?php echo htmlspecialchars($room['description']); ?></p>
-    
-    <div id="chatbox" style="border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll;">
+    <hr class="hr">
+    <h6>Active Users:</h6>
+    <ul id="userList" class="d-flex flex-wrap list-unstyled mb-2 gap-2"></ul>
+
+    <div id="chatbox" class="border rounded bg-white p-2 mb-3" style="height: 500px; overflow-y: auto;">
         <!-- Messages will appear here -->
     </div>
 
-    <script>
-        const chatbox = document.getElementById('chatbox');
-        let p;
-        <?php foreach ($messages as $message): ?>
-            p = document.createElement('p');
-            p.textContent = <?php echo json_encode($message['username'] . ': ' . $message['message_text']); ?>;
-            chatbox.appendChild(p);
-        <?php endforeach; ?>
-        chatbox.scrollTop = chatbox.scrollHeight;
-    </script>
-
-    <br>
-
-    <input type="text" id="messageInput" placeholder="Type your message..." style="width: 80%;" autofocus>
-    <button id="sendButton">Send</button>
-
-    <p id="status" style="color: green;">Connecting...</p>
+    <div class="input-group mb-3">
+        <input type="text" id="messageInput" class="form-control" placeholder="Type your message..." autofocus>
+        <button class="btn btn-success" id="sendButton">Send</button>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Initialize tooltip
-    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
-
+document.addEventListener('DOMContentLoaded', () => {
+    const chatbox = document.getElementById('chatbox');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
     const status = document.getElementById('status');
-
     const conn = new WebSocket('ws://localhost:8080/chat');
+
+    // Load previous messages with structured UI
+    <?php foreach ($messages as $message): ?>
+    (function(){
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('d-flex', 'mb-1');
+
+        const msgBubble = document.createElement('div');
+        msgBubble.classList.add('p-2', 'rounded', 'shadow-sm', 'd-flex', 'flex-column', 'mb-2');
+        // msgBubble.style.maxWidth = '70%';
+        msgBubble.style.wordWrap = 'break-word';
+
+        <?php
+            $time = date('H:i', strtotime($message['timestamp']));
+            $username = htmlspecialchars($message['username']);
+            $text = htmlspecialchars($message['message_text']);
+            $isCurrentUser = $message['username'] === $_SESSION['username'];
+        ?>
+
+        if (<?php echo $isCurrentUser ? 'true' : 'false'; ?>) {
+            msgDiv.classList.add('justify-content-end');
+            msgBubble.classList.add('bg-secondary-subtle', 'text-dark');
+        } else {
+            msgDiv.classList.add('justify-content-start');
+            msgBubble.classList.add('bg-dark', 'text-white');
+        }
+
+        const userDiv = document.createElement('div');
+        userDiv.classList.add('text-start', 'small', 'fw-semibold');
+        userDiv.textContent = <?php echo json_encode($username); ?>;
+
+        const messageP = document.createElement('p');
+        messageP.classList.add('m-1', 'text-center');
+        messageP.textContent = <?php echo json_encode($text); ?>;
+
+        const timeDiv = document.createElement('div');
+        timeDiv.classList.add('text-end', 'small');
+        timeDiv.textContent = <?php echo json_encode($time); ?>;
+
+        msgBubble.appendChild(userDiv);
+        msgBubble.appendChild(messageP);
+        msgBubble.appendChild(timeDiv);
+
+        msgDiv.appendChild(msgBubble);
+        chatbox.appendChild(msgDiv);
+    })();
+    <?php endforeach; ?>
+
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
     conn.onopen = () => {
         status.textContent = "Connected to chat server.";
@@ -95,22 +135,84 @@ include '../includes/header.php';
     };
 
     conn.onmessage = (e) => {
-        console.log("Received:", e.data);
-        const p = document.createElement('p');
-        p.textContent = e.data;
-        chatbox.appendChild(p);
-        chatbox.scrollTop = chatbox.scrollHeight;
+        try {
+            const data = JSON.parse(e.data);
+
+            if (data.type === "user_list") {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';
+                data.users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.classList.add("badge", "bg-secondary", "p-2");
+                    li.textContent = `@${user}`;
+                    userList.appendChild(li);
+                });
+            } else if (data.type === "chat_message") {
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('d-flex', 'mb-1');
+
+                const msgBubble = document.createElement('div');
+                msgBubble.classList.add('p-2', 'rounded', 'shadow-sm', 'd-flex', 'flex-column');
+                // msgBubble.style.maxWidth = '70%';
+                msgBubble.style.wordWrap = 'break-word';
+
+                if (data.username === <?php echo json_encode($_SESSION['username']); ?>) {
+                    msgDiv.classList.add('justify-content-end');
+                    msgBubble.classList.add('bg-secondary-subtle', 'text-dark');
+                } else {
+                    msgDiv.classList.add('justify-content-start');
+                    msgBubble.classList.add('bg-light');
+                }
+
+                const userDiv = document.createElement('div');
+                userDiv.classList.add('text-end', 'small', 'fw-semibold');
+                userDiv.textContent = data.username;
+
+                const messageP = document.createElement('p');
+                messageP.classList.add('m-1', 'text-center');
+                messageP.textContent = data.message;
+
+                const timeDiv = document.createElement('div');
+                timeDiv.classList.add('text-end', 'small');
+                timeDiv.textContent = data.time;
+
+                msgBubble.appendChild(userDiv);
+                msgBubble.appendChild(messageP);
+                msgBubble.appendChild(timeDiv);
+
+                msgDiv.appendChild(msgBubble);
+                chatbox.appendChild(msgDiv);
+                chatbox.scrollTop = chatbox.scrollHeight;
+            }
+        } catch {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('d-flex', 'mb-1', 'justify-content-start');
+
+            const msgBubble = document.createElement('div');
+            msgBubble.classList.add('p-2', 'rounded', 'shadow-sm', 'bg-light', 'd-flex', 'flex-column');
+            // msgBubble.style.maxWidth = '70%';
+            msgBubble.style.wordWrap = 'break-word';
+
+            const messageP = document.createElement('p');
+            messageP.classList.add('m-1', 'text-center');
+            messageP.textContent = e.data;
+
+            msgBubble.appendChild(messageP);
+            msgDiv.appendChild(msgBubble);
+            chatbox.appendChild(msgDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
     };
 
     conn.onclose = () => {
         status.textContent = "Disconnected from chat server.";
-        status.style.color = "red";
+        status.classList.replace('text-success', 'text-danger');
     };
 
     conn.onerror = (error) => {
         console.error("WebSocket error:", error);
         status.textContent = "Error connecting to chat server.";
-        status.style.color = "red";
+        status.classList.replace('text-success', 'text-danger');
     };
 
     sendButton.addEventListener('click', () => {
@@ -134,6 +236,7 @@ include '../includes/header.php';
             sendButton.click();
         }
     });
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>
